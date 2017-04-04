@@ -82,6 +82,9 @@ fi
 echo "Installing dependencies..."
 apk add alpine-sdk linux-headers libftdi1-dev
 #apt-get install swig libftdi-dev python-dev
+if [ ! -f /usr/include/ftdi.h ]; then
+    ln -s /usr/include/libftdi1/ftdi.h /usr/include/ftdi.h #link from path expected in libmpsse
+fi
 
 CWD=`pwd`
 # Install LoRaWAN packet forwarder repositories
@@ -100,18 +103,20 @@ fi
 
 ./configure --disable-python
 make
+echo "Compilation Successful"
 make install
-ldconfig
+echo "Install Successful"
 
-#popd
+#ldconfig
+
 cd $CWD
 
 # Build LoRa gateway app
 if [ ! -d lora_gateway ]; then
     git clone https://github.com/pjb304/lora_gateway.git
-    pushd lora_gateway
+    cd lora_gateway
 else
-    pushd lora_gateway
+    cd lora_gateway
     git reset --hard
     git pull
 fi
@@ -124,21 +129,21 @@ sed -i -e 's/ATTRS{idProduct}=="6010"/ATTRS{idProduct}=="6014"/g' /etc/udev/rule
 
 make
 
-popd
+cd $CWD
 
 # Build packet forwarder
 if [ ! -d packet_forwarder ]; then
     git clone https://github.com/pjb304/packet_forwarder.git
-    pushd packet_forwarder
+    cd packet_forwarder
 else
-    pushd packet_forwarder
+    cd packet_forwarder
     git pull
     git reset --hard
 fi
 
 make
 
-popd
+cd $CWD
 
 # Symlink poly packet forwarder
 if [ ! -d bin ]; then mkdir bin; fi
@@ -169,7 +174,7 @@ else
     echo -e "{\n\t\"gateway_conf\": {\n\t\t\"gateway_ID\": \"$GATEWAY_EUI\",\n\t\t\"servers\": [ { \"server_address\": \"router.eu.thethings.network\", \"serv_port_up\": 1700, \"serv_port_down\": 1700, \"serv_enabled\": true } ],\n\t\t\"ref_latitude\": $GATEWAY_LAT,\n\t\t\"ref_longitude\": $GATEWAY_LON,\n\t\t\"ref_altitude\": $GATEWAY_ALT,\n\t\t\"contact_email\": \"$GATEWAY_EMAIL\",\n\t\t\"description\": \"$GATEWAY_NAME\" \n\t}\n}" >$LOCAL_CONFIG_FILE
 fi
 
-popd
+cd $CWD
 
 echo "Gateway EUI is: $GATEWAY_EUI"
 echo "The hostname is: $NEW_HOSTNAME"
@@ -179,9 +184,9 @@ echo "Installation completed."
 
 # Start packet forwarder as a service
 cp ./start.sh $INSTALL_DIR/bin/
-cp ./ttn-gateway.service /lib/systemd/system/
-systemctl enable ttn-gateway.service
+#cp ./ttn-gateway.service /lib/systemd/system/
+#systemctl enable ttn-gateway.service
 
-echo "The system will reboot in 5 seconds..."
-sleep 5
-shutdown -r now
+#echo "The system will reboot in 5 seconds..."
+#sleep 5
+#shutdown -r now
