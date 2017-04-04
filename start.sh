@@ -1,7 +1,7 @@
-#! /bin/bash
+#! /bin/ash
 
 # Reset iC880a PIN
-SX1301_RESET_BCM_PIN=25
+SX1301_RESET_BCM_PIN=17
 echo "$SX1301_RESET_BCM_PIN"  > /sys/class/gpio/export 
 echo "out" > /sys/class/gpio/gpio$SX1301_RESET_BCM_PIN/direction 
 echo "0"   > /sys/class/gpio/gpio$SX1301_RESET_BCM_PIN/value 
@@ -40,7 +40,7 @@ if [ -d ../gateway-remote-config ]; then
     fi
 
     GATEWAY_EUI=$(ip link show $GATEWAY_EUI_NIC | awk '/ether/ {print $2}' | awk -F\: '{print $1$2$3"FFFE"$4$5$6}')
-    GATEWAY_EUI=${GATEWAY_EUI^^} # toupper
+    GATEWAY_EUI=`echo ${GATEWAY_EUI} | tr [a-z] [A-Z]` # toupper
 
     echo "[TTN Gateway]: Use Gateway EUI $GATEWAY_EUI based on $GATEWAY_EUI_NIC"
     INSTALL_DIR="/opt/ttn-gateway"
