@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/ash
 
 # Stop on the first sign of trouble
 set -e
@@ -11,15 +11,15 @@ fi
 VERSION="master"
 if [[ $1 != "" ]]; then VERSION=$1; fi
 
-echo "The Things Network Gateway installer"
+echo "The Things Network Gateway installer (ALPINE)"
 echo "Version $VERSION"
 
 # Update the gateway installer to the correct branch (defaults to master)
 echo "Updating installer files..."
 OLD_HEAD=$(git rev-parse HEAD)
-git fetch
-git checkout -q $VERSION
-git pull
+#git fetch
+#git checkout -q $VERSION
+#git pull
 NEW_HEAD=$(git rev-parse HEAD)
 
 if [[ $OLD_HEAD != $NEW_HEAD ]]; then
@@ -32,80 +32,68 @@ fi
 # or rely on the gateway EUI and retrieve settings files from remote (recommended)
 echo "Gateway configuration:"
 
-# Try to get gateway ID from MAC address
-# First try eth0, if that does not exist, try wlan0 (for RPi Zero)
-GATEWAY_EUI_NIC="eth0"
-if [[ `grep "$GATEWAY_EUI_NIC" /proc/net/dev` == "" ]]; then
-    GATEWAY_EUI_NIC="wlan0"
-fi
-
-if [[ `grep "$GATEWAY_EUI_NIC" /proc/net/dev` == "" ]]; then
-    echo "ERROR: No network interface found. Cannot set gateway ID."
-    exit 1
-fi
+GATEWAY_EUI_NIC=eth0
+#This logic is still slightly broken at the moment so hardcard eth0
+#if grep $GATEWAY_EUI_NIC /proc/net/dev > /dev/null; then
+#    GATEWAY_EUI_NIC=wlan0
+#fi
+#echo $GATEWAY_EUI_NIC
+#if grep $GATEWAY_EUI_NIC /proc/net/dev > /dev/null; then
+#  echo "OK" 
+#else
+#    echo "ERROR: No network interface found. Cannot set gateway ID."
+#    exit 1
+#fi
 
 GATEWAY_EUI=$(ip link show $GATEWAY_EUI_NIC | awk '/ether/ {print $2}' | awk -F\: '{print $1$2$3"FFFE"$4$5$6}')
-GATEWAY_EUI=${GATEWAY_EUI^^} # toupper
+GATEWAY_EUI=`echo ${GATEWAY_EUI} | tr [a-z] [A-Z]` # toupper
 
 echo "Detected EUI $GATEWAY_EUI from $GATEWAY_EUI_NIC"
 
 read -r -p "Do you want to use remote settings file? [y/N]" response
-response=${response,,} # tolower
+response=`echo ${response}| tr [A-Z][a-z]` # tolower
 
-if [[ $response =~ ^(yes|y) ]]; then
-    NEW_HOSTNAME="ttn-gateway"
+if  echo $response| grep -E "^(yes|y)"; then
     REMOTE_CONFIG=true
 else
-    printf "       Host name [ttn-gateway]:"
-    read NEW_HOSTNAME
-    if [[ $NEW_HOSTNAME == "" ]]; then NEW_HOSTNAME="ttn-gateway"; fi
-
-    printf "       Descriptive name [ttn-ic880a]:"
+    DEFAULT_GATEWAY_NAME=`cat /etc/hostname`
+    printf "       Descriptive name [${DEFAULT_GATEWAY_NAME}]:"
     read GATEWAY_NAME
-    if [[ $GATEWAY_NAME == "" ]]; then GATEWAY_NAME="ttn-ic880a"; fi
-
+    if echo $GATEWAY_NAME | grep -E "^$"; then GATEWAY_NAME=${DEFAULT_GATEWAY_NAME}; fi
     printf "       Contact email: "
     read GATEWAY_EMAIL
 
     printf "       Latitude [0]: "
     read GATEWAY_LAT
-    if [[ $GATEWAY_LAT == "" ]]; then GATEWAY_LAT=0; fi
+    if echo $GATEWAY_LAT | grep -E "^$"; then GATEWAY_LAT=0; fi
 
     printf "       Longitude [0]: "
     read GATEWAY_LON
-    if [[ $GATEWAY_LON == "" ]]; then GATEWAY_LON=0; fi
+    if echo $GATEWAY_LON | grep -E "^$"; then GATEWAY_LON=0; fi
 
     printf "       Altitude [0]: "
     read GATEWAY_ALT
-    if [[ $GATEWAY_ALT == "" ]]; then GATEWAY_ALT=0; fi
+    if echo $GATEWAY_ALT | grep -E "^$"; then GATEWAY_ALT=0; fi
 fi
 
 
-# Change hostname if needed
-CURRENT_HOSTNAME=$(hostname)
-
-if [[ $NEW_HOSTNAME != $CURRENT_HOSTNAME ]]; then
-    echo "Updating hostname to '$NEW_HOSTNAME'..."
-    hostname $NEW_HOSTNAME
-    echo $NEW_HOSTNAME > /etc/hostname
-    sed -i "s/$CURRENT_HOSTNAME/$NEW_HOSTNAME/" /etc/hosts
-fi
 
 # Check dependencies
 echo "Installing dependencies..."
-apt-get install swig libftdi-dev python-dev
+apk add alpine-sdk linux-headers libftdi1-dev
+#apt-get install swig libftdi-dev python-dev
 
+CWD=`pwd`
 # Install LoRaWAN packet forwarder repositories
 INSTALL_DIR="/opt/ttn-gateway"
-if [ ! -d "$INSTALL_DIR" ]; then mkdir $INSTALL_DIR; fi
-pushd $INSTALL_DIR
+if [ ! -d "$INSTALL_DIR" ]; then mkdir -p $INSTALL_DIR; fi
 
 # Build libraries
 if [ ! -d libmpsse ]; then
     git clone https://github.com/devttys0/libmpsse.git
-    pushd libmpsse/src
+    cd libmpsse/src
 else
-    pushd libmpsse/src
+    cd libmpsse/src
     git reset --hard
     git pull
 fi
@@ -115,11 +103,12 @@ make
 make install
 ldconfig
 
-popd
+#popd
+cd $CWD
 
 # Build LoRa gateway app
 if [ ! -d lora_gateway ]; then
-    git clone https://github.com/TheThingsNetwork/lora_gateway.git
+    git clone https://github.com/pjb304/lora_gateway.git
     pushd lora_gateway
 else
     pushd lora_gateway
@@ -139,7 +128,7 @@ popd
 
 # Build packet forwarder
 if [ ! -d packet_forwarder ]; then
-    git clone https://github.com/TheThingsNetwork/packet_forwarder.git
+    git clone https://github.com/pjb304/packet_forwarder.git
     pushd packet_forwarder
 else
     pushd packet_forwarder
