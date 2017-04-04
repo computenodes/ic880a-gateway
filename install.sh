@@ -32,7 +32,7 @@ fi
 # or rely on the gateway EUI and retrieve settings files from remote (recommended)
 echo "Gateway configuration:"
 
-+GATEWAY_EUI_NIC=eth0
+GATEWAY_EUI_NIC=eth0
 #This logic is still slightly broken at the moment so hardcard eth0
 #if grep $GATEWAY_EUI_NIC /proc/net/dev > /dev/null; then
 #    GATEWAY_EUI_NIC=wlan0
@@ -45,12 +45,12 @@ echo "Gateway configuration:"
 #    exit 1
 #fi
 GATEWAY_EUI=$(ip link show $GATEWAY_EUI_NIC | awk '/ether/ {print $2}' | awk -F\: '{print $1$2$3"FFFE"$4$5$6}')
-response=`echo ${response}| tr [A-Z][a-z]` # tolower
+GATEWAY_EUI=`echo ${GATEWAY_EUI} | tr [a-z] [A-Z]` # toupper
 
 echo "Detected EUI $GATEWAY_EUI from $GATEWAY_EUI_NIC"
 
 read -r -p "Do you want to use remote settings file? [y/N]" response
-response=${response,,} # tolower
+response=`echo ${response}| tr [A-Z][a-z]` # tolower
 
 if echo $response| grep -E "^(yes|y)"; then
     REMOTE_CONFIG=true
@@ -79,10 +79,11 @@ fi
 # remove hostname changing
 CURRENT_HOSTNAME=$(hostname)
 echo "Installing Deps..."
-apk add alpine-sdk linux-headers libftdi-dev
-if [ ! -f /usr/include/ftdi.h ]; then
-    ln -s /usr/include/libftdi1/ftdi.h /usr/include/ftdi.h #link from path expected in libmpsse
-fi
+#apk add alpine-sdk linux-headers
+#apk add alpine-sdk linux-headers libftdi-dev
+#if [ ! -f /usr/include/ftdi.h ]; then
+#    ln -s /usr/include/libftdi1/ftdi.h /usr/include/ftdi.h #link from path expected in libmpsse
+#fi
 
 
 # Install LoRaWAN packet forwarder repositories
@@ -161,7 +162,7 @@ fi
 cd $INSTALL_DIR
 
 echo "Gateway EUI is: $GATEWAY_EUI"
-echo "The hostname is: $NEW_HOSTNAME"
+echo "The hostname is: $(hostname)"
 echo "Check gateway status here (find your EUI): http://staging.thethingsnetwork.org/gatewaystatus/"
 echo
 echo "Installation completed."
