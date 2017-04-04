@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/ash
 
 # Stop on the first sign of trouble
 set -e
@@ -11,15 +11,15 @@ fi
 VERSION="spi"
 if [[ $1 != "" ]]; then VERSION=$1; fi
 
-echo "The Things Network Gateway installer"
+echo "The Things Network Gateway installer (ALPINE)"
 echo "Version $VERSION"
 
 # Update the gateway installer to the correct branch
 echo "Updating installer files..."
 OLD_HEAD=$(git rev-parse HEAD)
-git fetch
-git checkout -q $VERSION
-git pull
+#git fetch
+#git checkout -q $VERSION
+#git pull
 NEW_HEAD=$(git rev-parse HEAD)
 
 if [[ $OLD_HEAD != $NEW_HEAD ]]; then
@@ -32,84 +32,79 @@ fi
 # or rely on the gateway EUI and retrieve settings files from remote (recommended)
 echo "Gateway configuration:"
 
-# Try to get gateway ID from MAC address
-# First try eth0, if that does not exist, try wlan0 (for RPi Zero)
-GATEWAY_EUI_NIC="eth0"
-if [[ `grep "$GATEWAY_EUI_NIC" /proc/net/dev` == "" ]]; then
-    GATEWAY_EUI_NIC="wlan0"
-fi
-
-if [[ `grep "$GATEWAY_EUI_NIC" /proc/net/dev` == "" ]]; then
-    echo "ERROR: No network interface found. Cannot set gateway ID."
-    exit 1
-fi
-
++GATEWAY_EUI_NIC=eth0
+#This logic is still slightly broken at the moment so hardcard eth0
+#if grep $GATEWAY_EUI_NIC /proc/net/dev > /dev/null; then
+#    GATEWAY_EUI_NIC=wlan0
+#fi
+#echo $GATEWAY_EUI_NIC
+#if grep $GATEWAY_EUI_NIC /proc/net/dev > /dev/null; then
+#  echo "OK" 
+#else
+#    echo "ERROR: No network interface found. Cannot set gateway ID."
+#    exit 1
+#fi
 GATEWAY_EUI=$(ip link show $GATEWAY_EUI_NIC | awk '/ether/ {print $2}' | awk -F\: '{print $1$2$3"FFFE"$4$5$6}')
-GATEWAY_EUI=${GATEWAY_EUI^^} # toupper
+response=`echo ${response}| tr [A-Z][a-z]` # tolower
 
 echo "Detected EUI $GATEWAY_EUI from $GATEWAY_EUI_NIC"
 
 read -r -p "Do you want to use remote settings file? [y/N]" response
 response=${response,,} # tolower
 
-if [[ $response =~ ^(yes|y) ]]; then
-    NEW_HOSTNAME="ttn-gateway"
+if echo $response| grep -E "^(yes|y)"; then
     REMOTE_CONFIG=true
 else
-    printf "       Host name [ttn-gateway]:"
-    read NEW_HOSTNAME
-    if [[ $NEW_HOSTNAME == "" ]]; then NEW_HOSTNAME="ttn-gateway"; fi
-
-    printf "       Descriptive name [ttn-ic880a]:"
+    DEFAULT_GATEWAY_NAME=$(hostname)
+    printf "       Descriptive name [${DEFAULT_GATEWAY_NAME}]:"
     read GATEWAY_NAME
-    if [[ $GATEWAY_NAME == "" ]]; then GATEWAY_NAME="ttn-ic880a"; fi
-
+    if echo $GATEWAY_NAME | grep -E "^$"; then GATEWAY_NAME=${DEFAULT_GATEWAY_NAME}; fi
     printf "       Contact email: "
     read GATEWAY_EMAIL
 
     printf "       Latitude [0]: "
     read GATEWAY_LAT
-    if [[ $GATEWAY_LAT == "" ]]; then GATEWAY_LAT=0; fi
+    if echo $GATEWAY_LAT | grep -E "^$"; then GATEWAY_LAT=0; fi
 
     printf "       Longitude [0]: "
     read GATEWAY_LON
-    if [[ $GATEWAY_LON == "" ]]; then GATEWAY_LON=0; fi
+    if echo $GATEWAY_LON | grep -E "^$"; then GATEWAY_LON=0; fi
 
     printf "       Altitude [0]: "
     read GATEWAY_ALT
-    if [[ $GATEWAY_ALT == "" ]]; then GATEWAY_ALT=0; fi
+    if echo $GATEWAY_ALT | grep -E "^$"; then GATEWAY_ALT=0; fi
 fi
 
 
-# Change hostname if needed
+# remove hostname changing
 CURRENT_HOSTNAME=$(hostname)
-
-if [[ $NEW_HOSTNAME != $CURRENT_HOSTNAME ]]; then
-    echo "Updating hostname to '$NEW_HOSTNAME'..."
-    hostname $NEW_HOSTNAME
-    echo $NEW_HOSTNAME > /etc/hostname
-    sed -i "s/$CURRENT_HOSTNAME/$NEW_HOSTNAME/" /etc/hosts
+echo "Installing Deps..."
+apk add alpine-sdk linux-headers libftdi-dev
+if [ ! -f /usr/include/ftdi.h ]; then
+    ln -s /usr/include/libftdi1/ftdi.h /usr/include/ftdi.h #link from path expected in libmpsse
 fi
+
 
 # Install LoRaWAN packet forwarder repositories
 INSTALL_DIR="/opt/ttn-gateway"
-if [ ! -d "$INSTALL_DIR" ]; then mkdir $INSTALL_DIR; fi
-pushd $INSTALL_DIR
+if [ ! -d "$INSTALL_DIR" ]; then mkdir -p $INSTALL_DIR; fi
+SETUP_DIR=`pwd`
+cd $INSTALL_DIR
 
 # Remove WiringPi built from source (older installer versions)
-if [ -d wiringPi ]; then
-    pushd wiringPi
-    ./build uninstall
-    popd
-    rm -rf wiringPi
-fi 
+#if [ -d wiringPi ]; then
+#    pushd wiringPi
+#    ./build uninstall
+#    popd
+#    rm -rf wiringPi
+#fi 
 
 # Build LoRa gateway app
 if [ ! -d lora_gateway ]; then
-    git clone https://github.com/TheThingsNetwork/lora_gateway.git
-    pushd lora_gateway
+    git clone https://github.com/pjb304/lora_gateway.git
+    cd lora_gateway
 else
-    pushd lora_gateway
+    cd lora_gateway
     git reset --hard
     git pull
 fi
@@ -118,21 +113,21 @@ sed -i -e 's/PLATFORM= kerlink/PLATFORM= imst_rpi/g' ./libloragw/library.cfg
 
 make
 
-popd
+cd $INSTALL_DIR
 
 # Build packet forwarder
 if [ ! -d packet_forwarder ]; then
-    git clone https://github.com/TheThingsNetwork/packet_forwarder.git
-    pushd packet_forwarder
+    git clone https://github.com/pjb304/packet_forwarder.git
+    cd packet_forwarder
 else
-    pushd packet_forwarder
+    cd packet_forwarder
     git pull
     git reset --hard
 fi
 
 make
 
-popd
+cd $INSTALL_DIR
 
 # Symlink poly packet forwarder
 if [ ! -d bin ]; then mkdir bin; fi
@@ -149,33 +144,29 @@ if [ "$REMOTE_CONFIG" = true ] ; then
     # Get remote configuration repo
     if [ ! -d gateway-remote-config ]; then
         git clone https://github.com/ttn-zh/gateway-remote-config.git
-        pushd gateway-remote-config
+        cd gateway-remote-config
     else
-        pushd gateway-remote-config
+        cd gateway-remote-config
         git pull
         git reset --hard
     fi
 
     ln -s $INSTALL_DIR/gateway-remote-config/$GATEWAY_EUI.json $LOCAL_CONFIG_FILE
 
-    popd
+    cd $INSTALL_DIR
 else
     echo -e "{\n\t\"gateway_conf\": {\n\t\t\"gateway_ID\": \"$GATEWAY_EUI\",\n\t\t\"servers\": [ { \"server_address\": \"router.eu.thethings.network\", \"serv_port_up\": 1700, \"serv_port_down\": 1700, \"serv_enabled\": true } ],\n\t\t\"ref_latitude\": $GATEWAY_LAT,\n\t\t\"ref_longitude\": $GATEWAY_LON,\n\t\t\"ref_altitude\": $GATEWAY_ALT,\n\t\t\"contact_email\": \"$GATEWAY_EMAIL\",\n\t\t\"description\": \"$GATEWAY_NAME\" \n\t}\n}" >$LOCAL_CONFIG_FILE
 fi
 
-popd
+cd $INSTALL_DIR
 
 echo "Gateway EUI is: $GATEWAY_EUI"
 echo "The hostname is: $NEW_HOSTNAME"
 echo "Check gateway status here (find your EUI): http://staging.thethingsnetwork.org/gatewaystatus/"
 echo
 echo "Installation completed."
-
+cd $SETUP_DIR
 # Start packet forwarder as a service
 cp ./start.sh $INSTALL_DIR/bin/
-cp ./ttn-gateway.service /lib/systemd/system/
-systemctl enable ttn-gateway.service
+#cp ./ttn-gateway.service /lib/systemd/system/
 
-echo "The system will reboot in 5 seconds..."
-sleep 5
-shutdown -r now
