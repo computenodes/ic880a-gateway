@@ -1,5 +1,6 @@
 #! /bin/ash
 
+cd /opt/ttn-gateway/bin
 # Reset iC880a PIN
 SX1301_RESET_BCM_PIN=17
 echo "$SX1301_RESET_BCM_PIN"  > /sys/class/gpio/export 

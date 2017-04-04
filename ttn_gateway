@@ -1,0 +1,25 @@
+#!/sbin/openrc-run
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# Based on a guide from http://big-elephants.com/2013-01/writing-your-own-init-scripts/
+# $Header: $
+
+depend() {
+    need net
+    need localmount
+}
+
+start() {
+    ebegin "Starting LoRaWAN Gateway"
+    start-stop-daemon --background --start --exec /opt/ttn-gateway/bin/start.sh >> /var/log/ttn.log 2>&1 \
+    --make-pidfile --pidfile /var/run/ttn.pid
+    eend $?
+}
+
+stop() {
+    ebegin "Stopping LoRaWAN Gateway"
+    start-stop-daemon --stop --exec /opt/ttn-gateway/bin/start.sh \
+    --pidfile /var/run/ttn.pid
+}
+
+
