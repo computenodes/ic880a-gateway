@@ -86,14 +86,6 @@ if [ ! -d "$INSTALL_DIR" ]; then mkdir -p $INSTALL_DIR; fi
 SETUP_DIR=`pwd`
 cd $INSTALL_DIR
 
-# Remove WiringPi built from source (older installer versions)
-#if [ -d wiringPi ]; then
-#    pushd wiringPi
-#    ./build uninstall
-#    popd
-#    rm -rf wiringPi
-#fi 
-
 # Build LoRa gateway app
 if [ ! -d lora_gateway ]; then
     git clone https://github.com/pjb304/lora_gateway.git
@@ -132,13 +124,15 @@ cp -f ./packet_forwarder/poly_pkt_fwd/global_conf.json ./bin/global_conf.json
 
 LOCAL_CONFIG_FILE=$INSTALL_DIR/bin/local_conf.json
 
-# Remove old config file
-if [ -e $LOCAL_CONFIG_FILE ]; then rm $LOCAL_CONFIG_FILE; fi;
+# Remove old config file - it's an actual file
+if [ -f $LOCAL_CONFIG_FILE ]; then rm $LOCAL_CONFIG_FILE; fi;
+#remove old symlink to config file
+if [ -L $LOCAL_CONFIG_FILE ]; then unlink $LOCAL_CONFIG_FILE; fi;
 
 if [ "$REMOTE_CONFIG" = true ] ; then
     # Get remote configuration repo
     if [ ! -d gateway-remote-config ]; then
-        git clone https://github.com/ttn-zh/gateway-remote-config.git
+        git clone https://github.com/pjb304/gateway-remote-config.git
         cd gateway-remote-config
     else
         cd gateway-remote-config
