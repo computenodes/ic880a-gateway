@@ -11,7 +11,8 @@ depend() {
 
 start() {
     ebegin "Starting LoRaWAN Gateway"
-    start-stop-daemon --background --start --exec /opt/ttn-gateway/bin/start.sh >> /var/log/ttn.log 2>&1 \
+    start-stop-daemon --background --start \
+    --exec /opt/ttn-gateway/bin/start.sh -1 /var/log/ttn_gateway.log -2 /var/log/ttn_gateway-err.log \
     --make-pidfile --pidfile /var/run/ttn.pid
     eend $?
 }
