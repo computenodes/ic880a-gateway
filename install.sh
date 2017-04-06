@@ -33,17 +33,15 @@ fi
 echo "Gateway configuration:"
 
 GATEWAY_EUI_NIC=eth0
-#This logic is still slightly broken at the moment so hardcard eth0
-#if grep $GATEWAY_EUI_NIC /proc/net/dev > /dev/null; then
-#    GATEWAY_EUI_NIC=wlan0
-#fi
-#echo $GATEWAY_EUI_NIC
-#if grep $GATEWAY_EUI_NIC /proc/net/dev > /dev/null; then
-#  echo "OK" 
-#else
-#    echo "ERROR: No network interface found. Cannot set gateway ID."
-#    exit 1
-#fi
+if [[ `grep "$GATEWAY_EUI_NIC" /proc/net/dev` == "" ]]; then
+    GATEWAY_EUI_NIC="wlan0"
+fi
+
+if [[ `grep "$GATEWAY_EUI_NIC" /proc/net/dev` == "" ]]; then
+    echo "ERROR: No network interface found.  Cannot set gateway ID."
+    exit 1
+fi
+
 GATEWAY_EUI=$(ip link show $GATEWAY_EUI_NIC | awk '/ether/ {print $2}' | awk -F\: '{print $1$2$3"FFFE"$4$5$6}')
 GATEWAY_EUI=`echo ${GATEWAY_EUI} | tr [a-z] [A-Z]` # toupper
 
