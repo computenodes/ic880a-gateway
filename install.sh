@@ -77,11 +77,7 @@ fi
 # remove hostname changing
 CURRENT_HOSTNAME=$(hostname)
 echo "Installing Deps..."
-#apk add alpine-sdk linux-headers
-#apk add alpine-sdk linux-headers libftdi-dev
-#if [ ! -f /usr/include/ftdi.h ]; then
-#    ln -s /usr/include/libftdi1/ftdi.h /usr/include/ftdi.h #link from path expected in libmpsse
-#fi
+apk add alpine-sdk linux-headers
 
 
 # Install LoRaWAN packet forwarder repositories
