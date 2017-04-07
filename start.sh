@@ -44,17 +44,22 @@ if [ -d ../gateway-remote-config ]; then
 
 fi
 
-RESTART_COUNT=0
+RESTART_COUNT=0 #number of times a restart without a reset tried
 RESET_COUNT=0
 while [ $RESET_COUNT -lt $RESET_LIMIT ]; do
-    # Fire up the forwarder.
-    ./poly_pkt_fwd
-    if  [ $? == 0 ]; then #we exited happily therefore end the script
-	 echo "Poly packet forward exited cleanly"
-         exit 0 
-    fi
+   while [ $RESTART_COUNT -lt $RESTART_LIMIT ]; do
+	# Fire up the forwarder.
+        ./poly_pkt_fwd
+        if  [ $? == 0 ]; then #we exited happily therefore end the script
+    	    echo "Poly packet forward exited cleanly"
+            exit 0 
+        fi
+	>&2 echo "Unclean exit trying again (${RESTART_COUNT}/${RESTART_LIMIT})"
+	let RESTART_COUNT=RESTART_COUNT+1
+    done
     ./reset_iC880.sh
     let RESET_COUNT=RESET_COUNT+1
-    echo "Unclean exit resetting and trying again (${RESET_COUNT}/${RESET_LIMIT})"
+    let RESTART_COUNT=0 ##reset restart counter
+    >&2 echo "Unclean exit resetting and trying again (${RESET_COUNT}/${RESET_LIMIT})"
 done
         
