@@ -1,18 +1,10 @@
-#! /bin/ash
+#! /bin/bash
 
 cd /opt/ttn-gateway/bin
 # Reset iC880a PIN
-SX1301_RESET_BCM_PIN=17
-echo "$SX1301_RESET_BCM_PIN"  > /sys/class/gpio/export 
-echo "out" > /sys/class/gpio/gpio$SX1301_RESET_BCM_PIN/direction 
-echo "0"   > /sys/class/gpio/gpio$SX1301_RESET_BCM_PIN/value 
-sleep 0.1  
-echo "1"   > /sys/class/gpio/gpio$SX1301_RESET_BCM_PIN/value 
-sleep 0.1  
-echo "0"   > /sys/class/gpio/gpio$SX1301_RESET_BCM_PIN/value
-sleep 0.1
-echo "$SX1301_RESET_BCM_PIN"  > /sys/class/gpio/unexport 
-
+./reset_iC880.sh
+RESTART_LIMIT=3
+RESET_LIMIT=2
 # Test the connection, wait if needed.
 while [[ $(ping -c1 google.com 2>&1 | grep " 0% packet loss") == "" ]]; do
   echo "[TTN Gateway]: Waiting for internet connection..."
@@ -52,5 +44,17 @@ if [ -d ../gateway-remote-config ]; then
 
 fi
 
-# Fire up the forwarder.
-./poly_pkt_fwd
+RESTART_COUNT=0
+RESET_COUNT=0
+while [ $RESET_COUNT -lt $RESET_LIMIT ]; do
+    # Fire up the forwarder.
+    ./poly_pkt_fwd
+    if  [ $? == 0 ]; then #we exited happily therefore end the script
+	 echo "Poly packet forward exited cleanly"
+         exit 0 
+    fi
+    ./reset_iC880.sh
+    let RESET_COUNT=RESET_COUNT+1
+    echo "Unclean exit resetting and trying again (${RESET_COUNT}/${RESET_LIMIT})"
+done
+        

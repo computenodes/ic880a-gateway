@@ -157,5 +157,8 @@ echo "Installation completed."
 cd $SETUP_DIR
 # Start packet forwarder as a service
 cp ./start.sh $INSTALL_DIR/bin/
+cp ./reset_iC880.sh $INSTALL_DIR/bin
+
+cp ttn_gateway /etc/init.d
 #cp ./ttn-gateway.service /lib/systemd/system/
 
