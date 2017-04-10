@@ -161,3 +161,9 @@ cp ./reset_iC880.sh $INSTALL_DIR/bin
 
 cp ttn_gateway /etc/init.d
 rc-update add ttn_gateway default
+
+cat >> /etc/lbu/include << EOF
+/opt
+/etc/init.d/ttn_gateway
+EOF
+lbu ci #commit the changes that have been made
