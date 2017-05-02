@@ -9,7 +9,9 @@ if [ $UID != 0 ]; then
 fi
 
 VERSION="spi"
-if [[ $1 != "" ]]; then VERSION=$1; fi
+REMOTE=false
+#Check to see if remote flag is passed in as option
+if [[ $1 == "remote" ]]; then REMOTE=true; fi
 
 echo "The Things Network Gateway installer (ALPINE)"
 echo "Version $VERSION"
@@ -46,31 +48,34 @@ GATEWAY_EUI=$(ip link show $GATEWAY_EUI_NIC | awk '/ether/ {print $2}' | awk -F\
 GATEWAY_EUI=`echo ${GATEWAY_EUI} | tr [a-z] [A-Z]` # toupper
 
 echo "Detected EUI $GATEWAY_EUI from $GATEWAY_EUI_NIC"
-
-read -r -p "Do you want to use remote settings file? [y/N]" response
-response=`echo ${response}| tr [A-Z][a-z]` # tolower
-
-if echo $response| grep -E "^(yes|y)"; then
+if $REMOTE; then
     REMOTE_CONFIG=true
-else
-    DEFAULT_GATEWAY_NAME=$(hostname)
-    printf "       Descriptive name [${DEFAULT_GATEWAY_NAME}]:"
-    read GATEWAY_NAME
-    if echo $GATEWAY_NAME | grep -E "^$"; then GATEWAY_NAME=${DEFAULT_GATEWAY_NAME}; fi
-    printf "       Contact email: "
-    read GATEWAY_EMAIL
+else 
+    read -r -p "Do you want to use remote settings file? [y/N]" response
+    response=`echo ${response}| tr [A-Z][a-z]` # tolower
 
-    printf "       Latitude [0]: "
-    read GATEWAY_LAT
-    if echo $GATEWAY_LAT | grep -E "^$"; then GATEWAY_LAT=0; fi
+    if echo $response| grep -E "^(yes|y)"; then
+        REMOTE_CONFIG=true
+    else
+        DEFAULT_GATEWAY_NAME=$(hostname)
+        printf "       Descriptive name [${DEFAULT_GATEWAY_NAME}]:"
+        read GATEWAY_NAME
+        if echo $GATEWAY_NAME | grep -E "^$"; then GATEWAY_NAME=${DEFAULT_GATEWAY_NAME}; fi
+        printf "       Contact email: "
+        read GATEWAY_EMAIL
 
-    printf "       Longitude [0]: "
-    read GATEWAY_LON
-    if echo $GATEWAY_LON | grep -E "^$"; then GATEWAY_LON=0; fi
+        printf "       Latitude [0]: "
+        read GATEWAY_LAT
+        if echo $GATEWAY_LAT | grep -E "^$"; then GATEWAY_LAT=0; fi
 
-    printf "       Altitude [0]: "
-    read GATEWAY_ALT
-    if echo $GATEWAY_ALT | grep -E "^$"; then GATEWAY_ALT=0; fi
+        printf "       Longitude [0]: "
+        read GATEWAY_LON
+        if echo $GATEWAY_LON | grep -E "^$"; then GATEWAY_LON=0; fi
+
+        printf "       Altitude [0]: "
+        read GATEWAY_ALT
+        if echo $GATEWAY_ALT | grep -E "^$"; then GATEWAY_ALT=0; fi
+    fi
 fi
 
 
