@@ -1,4 +1,4 @@
-#!/bin/ash
+#!/bin/bash
 SX1301_RESET_BCM_PIN="17"
 echo "Resetting iC880 using pin $SX1301_RESET_BCM_PIN"
 echo "$SX1301_RESET_BCM_PIN"  > /sys/class/gpio/export
