@@ -39,7 +39,7 @@ if [ -d ../gateway-remote-config ]; then
     INSTALL_DIR="/opt/ttn-gateway"
     LOCAL_CONFIG_FILE=$INSTALL_DIR/bin/local_conf.json
 
-    if [ -e $LOCAL_CONFIG_FILE ]; then rm $LOCAL_CONFIG_FILE; fi;
+    if [ -L $LOCAL_CONFIG_FILE ]; then rm $LOCAL_CONFIG_FILE; fi;
     ln -s $INSTALL_DIR/gateway-remote-config/$GATEWAY_EUI.json $LOCAL_CONFIG_FILE
 
 fi
