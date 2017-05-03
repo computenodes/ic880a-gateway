@@ -82,7 +82,7 @@ fi
 # remove hostname changing
 CURRENT_HOSTNAME=$(hostname)
 echo "Installing Deps..."
-apt-get install swig libftdi-dev python-dev
+apt-get install swig libftdi-dev python-dev build-essential
 
 # Install LoRaWAN packet forwarder repositories
 INSTALL_DIR="/opt/ttn-gateway"
