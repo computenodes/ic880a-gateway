@@ -82,8 +82,7 @@ fi
 # remove hostname changing
 CURRENT_HOSTNAME=$(hostname)
 echo "Installing Deps..."
-apk add alpine-sdk linux-headers
-
+apt-get install swig libftdi-dev python-dev
 
 # Install LoRaWAN packet forwarder repositories
 INSTALL_DIR="/opt/ttn-gateway"
@@ -164,8 +163,8 @@ cd $SETUP_DIR
 cp ./start.sh $INSTALL_DIR/bin/
 cp ./reset_iC880.sh $INSTALL_DIR/bin
 
-cp ttn_gateway /etc/init.d
-rc-update add ttn_gateway default
+#cp ttn_gateway /etc/init.d
+#rc-update add ttn_gateway default
 
 #cat >> /etc/lbu/include << EOF
 #/opt
