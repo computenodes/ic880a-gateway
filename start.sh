@@ -60,6 +60,7 @@ while [ $RESET_COUNT -lt $RESET_LIMIT ]; do
     ./reset_iC880.sh
     let RESET_COUNT=RESET_COUNT+1
     let RESTART_COUNT=0 ##reset restart counter
+    sleep 5
     >&2 echo "Unclean exit resetting and trying again (${RESET_COUNT}/${RESET_LIMIT})"
 done
         
