@@ -92,7 +92,7 @@ cd $INSTALL_DIR
 
 # Build LoRa gateway app
 if [ ! -d lora_gateway ]; then
-    git clone https://github.com/pjb304/lora_gateway.git
+    git clone https://github.com/computenodes/lora_gateway.git
     cd lora_gateway
 else
     cd lora_gateway
@@ -108,7 +108,7 @@ cd $INSTALL_DIR
 
 # Build packet forwarder
 if [ ! -d packet_forwarder ]; then
-    git clone https://github.com/pjb304/packet_forwarder.git
+    git clone https://github.com/computenodes/packet_forwarder.git
     cd packet_forwarder
 else
     cd packet_forwarder
@@ -136,7 +136,7 @@ if [ -L $LOCAL_CONFIG_FILE ]; then unlink $LOCAL_CONFIG_FILE; fi;
 if [ "$REMOTE_CONFIG" = true ] ; then
     # Get remote configuration repo
     if [ ! -d gateway-remote-config ]; then
-        git clone https://github.com/pjb304/gateway-remote-config.git
+        git clone https://github.com/computenodes/gateway-remote-config.git
         cd gateway-remote-config
     else
         cd gateway-remote-config
