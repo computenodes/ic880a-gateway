@@ -43,7 +43,7 @@ if [ -d ../gateway-remote-config ]; then
     ln -s $INSTALL_DIR/gateway-remote-config/$GATEWAY_EUI.json $LOCAL_CONFIG_FILE
 
 fi
-
+./enable_gps.sh
 RESTART_COUNT=0 #number of times a restart without a reset tried
 RESET_COUNT=0
 while [ $RESET_COUNT -lt $RESET_LIMIT ]; do
