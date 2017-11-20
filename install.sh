@@ -162,7 +162,7 @@ cd $SETUP_DIR
 # Start packet forwarder as a service
 cp ./start.sh $INSTALL_DIR/bin/
 cp ./reset_iC880.sh $INSTALL_DIR/bin
-
+cp ./enable_gps.sh $INSTALL_DIR/bin
 #cp ttn_gateway /etc/init.d
 #rc-update add ttn_gateway default
 
