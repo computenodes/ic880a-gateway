@@ -3,6 +3,7 @@
 cd /opt/ttn-gateway/bin
 # Reset iC880a PIN
 ./reset_iC880.sh
+./enable_gps.sh
 RESTART_LIMIT=3
 RESET_LIMIT=2
 # Test the connection, wait if needed.
