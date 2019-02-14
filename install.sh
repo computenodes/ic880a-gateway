@@ -13,7 +13,7 @@ REMOTE=false
 #Check to see if remote flag is passed in as option
 if [[ $1 == "remote" ]]; then REMOTE=true; fi
 
-echo "The Things Network Gateway installer (DEBIAN)"
+echo "The Things Network Gateway installer (RESIN DEBIAN)"
 echo "Version $VERSION"
 
 # Update the gateway installer to the correct branch
