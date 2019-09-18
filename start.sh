@@ -7,7 +7,7 @@ cd /opt/ttn-gateway/bin
 RESTART_LIMIT=3
 RESET_LIMIT=2
 # Test the connection, wait if needed.
-while [[ $(ping -c1 google.com 2>&1 | grep " 0% packet loss") == "" ]]; do
+while [[ $(ping -4 -c1 google.com 2>&1 | grep " 0% packet loss") == "" ]]; do
   echo "[TTN Gateway]: Waiting for internet connection..."
   sleep 30
   done
